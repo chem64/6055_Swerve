@@ -149,9 +149,7 @@ void Robot::DriveSwerve(double FWD, double STR, double RCW)
   turnOUT = std::clamp(m_TurnPID.Calculate(turnPV,turnSP),-1.0,1.0); 
   m_rrTurn.Set(ControlMode::PercentOutput,turnOUT);
   m_rrDrive.Set(ControlMode::PercentOutput,ws4 *= rrFlip);
-
 }
-
 
 void Robot::ConfigMotors()
 {

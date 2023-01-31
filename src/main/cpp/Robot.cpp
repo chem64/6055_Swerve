@@ -122,8 +122,6 @@ void Robot::AutonomousPeriodic()
   //execute the selected auto routine
   if(dAutoSelect == 1)  RunAuto_1();
   //if(dAutoSelect == 2)  RunAuto_2();
-  //if(dAutoSelect == 3)  RunAuto_2();  //uses curve left stream for forward
-  //if(dAutoSelect == 4)  RunAuto_2();  //uses curve right stream for forward
 }
 
 void Robot::TeleopInit() 
@@ -148,7 +146,6 @@ void Robot::TeleopPeriodic()
 
   //toggle robot/field orientation for swerve drive
   if(m_driveController.GetRawButtonPressed(0)) {SwerveOrientationToField = !SwerveOrientationToField;}
-  
 }
 
 void Robot::DisabledInit() 
