@@ -27,11 +27,21 @@ void Robot::Self_Level()
     double rollDeg = 0.0;
     double driveOut = 0.0;
     rollDeg = ahrs->GetRoll();
-    driveOut = sin(rollDeg) * -1.0;  //roll in reverse direction of declining angle - drive toward the tilt up
-    m_frDrive.Set(ControlMode::PercentOutput,driveOut);
-    m_flDrive.Set(ControlMode::PercentOutput,driveOut);
-    m_rlDrive.Set(ControlMode::PercentOutput,driveOut);
-    m_rrDrive.Set(ControlMode::PercentOutput,driveOut);
+    if(fabs(rollDeg) < constants::kSelfLevelDeadband)
+    {
+        driveOut = sin(rollDeg) * -1.0;  //roll in reverse direction of declining angle - drive toward the tilt up
+        m_frDrive.Set(ControlMode::PercentOutput,driveOut);
+        m_flDrive.Set(ControlMode::PercentOutput,driveOut);
+        m_rlDrive.Set(ControlMode::PercentOutput,driveOut);
+        m_rrDrive.Set(ControlMode::PercentOutput,driveOut);
+    }
+    else
+    {
+        m_frDrive.Set(ControlMode::PercentOutput,0.0);
+        m_flDrive.Set(ControlMode::PercentOutput,0.0);
+        m_rlDrive.Set(ControlMode::PercentOutput,0.0);
+        m_rrDrive.Set(ControlMode::PercentOutput,0.0);
+    }
 }
 
 void Robot::InitBuffer(BufferedTrajectoryPointStream *bufstrm, const double profile[][2], int totalCnt, bool reverse)

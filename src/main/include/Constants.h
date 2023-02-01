@@ -12,6 +12,7 @@ namespace constants
   constexpr double kSwerveAngleBreak = 100;
   constexpr bool kSwerveReturnToZero = false;
   constexpr double kSwerveDriveSpeedFilter = 2.0;  //smaller is more filtering (slower to reach top speed) - will bypass filter when joystick released
+  constexpr double kSelfLevelDeadband = 1.0;  //deadband before level correction is done
 
   constexpr double kRadtoDeg = 57.2957795;
   constexpr double kDeg2Rad = 0.017453292519943295;
