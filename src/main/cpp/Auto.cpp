@@ -24,16 +24,16 @@ void Robot::AutoReset()
 
 void Robot::Self_Level()
 {
-    double rollDeg = 0.0;
     double driveOut = 0.0;
-    rollDeg = ahrs->GetRoll();
-    if(fabs(rollDeg) < constants::kSelfLevelDeadband)
+    double rollDeg = ahrs->GetRoll();
+
+    if(fabs(rollDeg) > constants::kSelfLevelDeadband)
     {
-        driveOut = sin(rollDeg) * -1.0;  //roll in reverse direction of declining angle - drive toward the tilt up
-        m_frDrive.Set(ControlMode::PercentOutput,driveOut);
-        m_flDrive.Set(ControlMode::PercentOutput,driveOut);
-        m_rlDrive.Set(ControlMode::PercentOutput,driveOut);
-        m_rrDrive.Set(ControlMode::PercentOutput,driveOut);
+        driveOut = sin(rollDeg) * constants::kSelfLevelGain;  //roll in reverse direction of declining angle - drive toward the tilt up
+        m_frDrive.Set(ControlMode::PercentOutput,std::clamp(driveOut,-1.0,1.0));
+        m_flDrive.Set(ControlMode::PercentOutput,std::clamp(driveOut,-1.0,1.0));
+        m_rlDrive.Set(ControlMode::PercentOutput,std::clamp(driveOut,-1.0,1.0));
+        m_rrDrive.Set(ControlMode::PercentOutput,std::clamp(driveOut,-1.0,1.0));
     }
     else
     {

@@ -71,6 +71,8 @@ class Robot : public frc::TimedRobot {
          
     //SWERVE
     
+    double driveOut = 0.0;
+    double rollDeg = 0.0;
     frc2::PIDController m_TurnPID{constants::kTurn_KP, constants::kTurn_KI, constants::kTurn_KD};
     frc::SlewRateLimiter<units::scalar> spdFilter{2/1_s};
     

@@ -158,23 +158,31 @@ void Robot::DisabledPeriodic() {}
 
 void Robot::TestInit() 
 {
-  CurMode = 3;
+  //CurMode = 3;
 }
+
 void Robot::TestPeriodic() 
 {
   Self_Level();
+  
 }
 
 double Robot::GetHeading()
 {
   //subtract the offset recorded at init
-  double yaw = ahrs->GetYaw() - HeadingOffset;
-  //normalize angle
-  //yaw = (int)yaw % 180; 
-  yaw = CheckWrap(yaw);
+  double yaw = 0.0; 
+  try
+  {
+    yaw = ahrs->GetYaw() - HeadingOffset;
+    //normalize angle
+    yaw = CheckWrap(yaw);
+  }
+  catch(const std::exception e)
+  {
+    yaw = 0.0;
+  }
   return yaw;
 }
-
 
 #ifndef RUNNING_FRC_TESTS
 int main() 
