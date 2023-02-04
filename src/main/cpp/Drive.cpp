@@ -22,12 +22,18 @@ void Robot::StopAllDrives()
   m_flDrive.StopMotor();
 }
 
+void Robot::UpdateSwerveSP()
+{
+   /*//get current wheel position as last setpoint
+   lastFR_SP = CheckWrap(m_frEncoder.GetPosition() - constants::kFrontRightOffset);
+   lastFL_SP = CheckWrap(m_flEncoder.GetPosition() - constants::kFrontLeftOffset);
+   lastRL_SP = CheckWrap(m_rlEncoder.GetPosition() - constants::kRearLeftOffset);
+   lastRR_SP = CheckWrap(m_rrEncoder.GetPosition() - constants::kRearRightOffset);*/
+}
+
 void Robot::DriveSwerve(double FWD, double STR, double RCW)
 {
-  static double lastFR_SP = 0.0;
-  static double lastFL_SP = 0.0;
-  static double lastRL_SP = 0.0;
-  static double lastRR_SP = 0.0;
+  
   L = constants::kWheelbase; //wheelbase (from center of front wheel to center of back wheel)
   W = constants::kWheelwidth; //wheelwidth (from center of left wheel to center of right wheel)
   R = sqrt((L * L) + (W * W));
@@ -67,6 +73,7 @@ void Robot::DriveSwerve(double FWD, double STR, double RCW)
   if (FWD == 0 && STR == 0 && RCW == 0)
   {
     StopAllDrives();
+    UpdateSwerveSP();
     return;
   }
   //Front Right
@@ -103,7 +110,7 @@ void Robot::DriveSwerve(double FWD, double STR, double RCW)
   if(constants::kSwerveOptimizeAngles)
   {
     if(flFlip < 0) (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
-    if (fabs(turnSP - lastFL_SP) > constants::kSwerveAngleBreak) 
+    if (fabs(turnSP + lastFL_SP) > constants::kSwerveAngleBreak) 
     {
       flFlip *= -1.0;
       (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
@@ -121,7 +128,7 @@ void Robot::DriveSwerve(double FWD, double STR, double RCW)
   if(constants::kSwerveOptimizeAngles)
   {
     if(rlFlip < 0) (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
-    if (fabs(turnSP - lastRL_SP) > constants::kSwerveAngleBreak) 
+    if (fabs(turnSP + lastRL_SP) > constants::kSwerveAngleBreak) 
     {
       rlFlip *= -1.0;
       (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
@@ -139,7 +146,7 @@ void Robot::DriveSwerve(double FWD, double STR, double RCW)
   if(constants::kSwerveOptimizeAngles)
   {
     if(rrFlip < 0) (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
-    if (fabs(turnSP - lastRR_SP) > constants::kSwerveAngleBreak) 
+    if (fabs(turnSP + lastRR_SP) > constants::kSwerveAngleBreak) 
     {
       rrFlip *= -1.0;
       (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;

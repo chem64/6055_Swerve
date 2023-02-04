@@ -33,6 +33,7 @@ void Robot::RobotInit()
 
   ClockStart = frc::Timer::GetFPGATimestamp();
 
+  UpdateSwerveSP();
 }
 
 void Robot::RobotPeriodic() 
@@ -145,12 +146,13 @@ void Robot::TeleopPeriodic()
   DriveSwerve(forward, strafe, rotate);
 
   //toggle robot/field orientation for swerve drive
-  if(m_driveController.GetRawButtonPressed(0)) {SwerveOrientationToField = !SwerveOrientationToField;}
+  if(m_driveController.GetRawButtonPressed(1)) {SwerveOrientationToField = !SwerveOrientationToField;}
 }
 
 void Robot::DisabledInit() 
 {
   StopAllDrives();
+  UpdateSwerveSP();
   CurMode = 0;
 }
 
@@ -158,13 +160,12 @@ void Robot::DisabledPeriodic() {}
 
 void Robot::TestInit() 
 {
-  //CurMode = 3;
+  CurMode = 3;
 }
 
 void Robot::TestPeriodic() 
 {
-  Self_Level();
-  
+  Self_Level();  
 }
 
 double Robot::GetHeading()

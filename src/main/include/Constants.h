@@ -40,10 +40,10 @@ namespace constants
   constexpr double kEncoderCountsPerDegree = 4096.0 / 360.0;
 
   //read these from cancoder absolute position when cancoder is configured to -180 to 180 range
-  constexpr double kFrontRightOffset = 26.9;
-  constexpr double kFrontLeftOffset = 37.0;
-  constexpr double kRearLeftOffset = 66.6;
-  constexpr double kRearRightOffset = 98.7;
+  constexpr double kFrontRightOffset = 24.69;
+  constexpr double kFrontLeftOffset = -38.4;
+  constexpr double kRearLeftOffset = -67.2;
+  constexpr double kRearRightOffset = -94.4;
 
   constexpr double kTurn_KP = 0.01; 
   constexpr double kTurn_KI = 0;

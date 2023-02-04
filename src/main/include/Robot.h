@@ -33,6 +33,7 @@ class Robot : public frc::TimedRobot {
 
   double GetHeading();
   double CheckWrap(double pos);
+  void UpdateSwerveSP();
   void DriveSwerve(double FWD, double STR, double RCW);
   void ConfigMotors();
   void Self_Level();
@@ -71,6 +72,10 @@ class Robot : public frc::TimedRobot {
          
     //SWERVE
     
+    double lastFR_SP = 0.0;
+    double lastFL_SP = 0.0;
+    double lastRL_SP = 0.0;
+    double lastRR_SP = 0.0;
     double driveOut = 0.0;
     double rollDeg = 0.0;
     frc2::PIDController m_TurnPID{constants::kTurn_KP, constants::kTurn_KI, constants::kTurn_KD};
