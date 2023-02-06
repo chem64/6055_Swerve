@@ -4,6 +4,7 @@ void Robot::RobotInit()
 {
   ntBOSS = nt::NetworkTableInstance::GetDefault().GetTable("dashBOSS");
   ConfigMotors();
+  ArmBrake.SetBounds(2.0, 1.8, 1.5, 1.2, 1.0); 
   m_TurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
   try
   {
@@ -33,7 +34,6 @@ void Robot::RobotInit()
 
   ClockStart = frc::Timer::GetFPGATimestamp();
 
-  UpdateSwerveSP();
 }
 
 void Robot::RobotPeriodic() 
@@ -90,6 +90,7 @@ void Robot::RobotPeriodic()
     ntBOSS->PutNumber("RL_DIST", m_rlDrive.GetSelectedSensorPosition() * constants::kDriveUnitsToFeet);
     ntBOSS->PutNumber("RR_POS",CheckWrap(m_rrEncoder.GetPosition()-constants::kRearRightOffset));
     ntBOSS->PutNumber("RR_DIST", m_rrDrive.GetSelectedSensorPosition() * constants::kDriveUnitsToFeet);
+    ntBOSS->PutNumber("Winch",m_winch1.GetSelectedSensorPosition());
     ntBOSS->PutNumber("joy_FORWARD", forward);
     ntBOSS->PutNumber("joy_STRAFE", strafe);
     ntBOSS->PutNumber("joy_ROTATE", rotate);
@@ -152,7 +153,6 @@ void Robot::TeleopPeriodic()
 void Robot::DisabledInit() 
 {
   StopAllDrives();
-  UpdateSwerveSP();
   CurMode = 0;
 }
 
@@ -165,7 +165,18 @@ void Robot::TestInit()
 
 void Robot::TestPeriodic() 
 {
-  Self_Level();  
+  //Self_Level();
+  
+  /*To drive fully out, the position is set to 1.0 (2" stroke) 
+  To drive half way, the position is set to 0.5 
+  To drive fully in, the position is set to 0.0
+  ArmBrake.SetBounds(2.0, 1.8, 1.5, 1.2, 1.0); */
+  static bool BrakeOn;
+  if(m_driveController.GetRawButtonPressed(1)) BrakeOn = !BrakeOn;
+  if(BrakeOn) ArmBrake.SetPosition(0.0);  //retracted in
+  if(!BrakeOn) ArmBrake.SetPosition(1.0); //extended out
+
+
 }
 
 double Robot::GetHeading()

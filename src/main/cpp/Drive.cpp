@@ -22,16 +22,133 @@ void Robot::StopAllDrives()
   m_flDrive.StopMotor();
 }
 
-void Robot::UpdateSwerveSP()
+double Robot::GetEffectiveAngle(double actAngle,double flip)
 {
-   /*//get current wheel position as last setpoint
-   lastFR_SP = CheckWrap(m_frEncoder.GetPosition() - constants::kFrontRightOffset);
-   lastFL_SP = CheckWrap(m_flEncoder.GetPosition() - constants::kFrontLeftOffset);
-   lastRL_SP = CheckWrap(m_rlEncoder.GetPosition() - constants::kRearLeftOffset);
-   lastRR_SP = CheckWrap(m_rrEncoder.GetPosition() - constants::kRearRightOffset);*/
+  //get value of actual turn angle
+  double ret = actAngle;
+  //now get the effective angle (actual direction of movement)
+  if (flip < 0) (ret<=0.0)?ret+=180.0:ret-=180.0;
+  return ret;
 }
 
 void Robot::DriveSwerve(double FWD, double STR, double RCW)
+{
+  
+  L = constants::kWheelbase; //wheelbase (from center of front wheel to center of back wheel)
+  W = constants::kWheelwidth; //wheelwidth (from center of left wheel to center of right wheel)
+  R = sqrt((L * L) + (W * W));
+
+  //get current heading
+  Heading = GetHeading();
+  if(SwerveOrientationToField)
+  {
+    //convert to radians
+    double yaw = Heading / constants::kRadtoDeg;
+    //recalculate joystick inputs
+    double tmp = FWD * cos(yaw) + STR * sin(yaw);
+    STR = -FWD * sin(yaw) + STR * cos(yaw);
+    FWD = tmp;
+  }
+
+  A = STR - RCW * (L / R);
+  B = STR + RCW * (L / R);
+  C = FWD - RCW * (W / R);
+  D = FWD + RCW * (W / R);
+
+  ws1 = sqrt((B * B) + (C * C));
+  wa1 = atan2(B, C) * 180 / M_PI;   //-180 to 180 degrees
+  ws2 = sqrt((B * B) + (D * D));
+  wa2 = atan2(B, D) * 180 / M_PI;
+  ws3 = sqrt((A * A) + (D * D));
+  wa3 = atan2(A, D) * 180 / M_PI;
+  ws4 = sqrt((A * A) + (C * C));
+  wa4 = atan2(A, C) * 180 / M_PI;
+  
+  double max = ws1;
+  if (ws2 > max)max = ws2;
+  if (ws3 > max)max = ws3;
+  if (ws4 > max)max = ws4;
+  if (max > 1) { ws1 /= max; ws2 /= max; ws3 /= max; ws4 /= max; }
+
+  if (FWD == 0 && STR == 0 && RCW == 0)
+  {
+    StopAllDrives();
+    return;
+  }
+  //Front Right
+  //set setpoint to joystick
+  double turnSP = wa1;
+  //actual angle is where encoder is pointing
+  double ActAngle = CheckWrap(m_frEncoder.GetPosition()-constants::kFrontRightOffset);  //cancoder position accumulates on every turn - does not automatically wrap
+  //get the effective angle - direction motor is moving
+  double turnPV = GetEffectiveAngle(ActAngle,frFlip);
+  //if desired setpoint change is greater than our setting - flip direction of drive
+  if (fabs(turnSP - turnPV) > constants::kSwerveAngleBreak)
+  {
+    frFlip *= -1.0;
+    turnPV = GetEffectiveAngle(ActAngle,frFlip);
+  }
+  //calculate PID base on effective angle and setpoint
+  double turnOUT = std::clamp(m_TurnPID.Calculate(turnPV,turnSP),-1.0,1.0); 
+  m_frTurn.Set(ControlMode::PercentOutput,turnOUT);
+  m_frDrive.Set(ControlMode::PercentOutput,ws1 *= frFlip);
+
+  //Front Left
+  //set setpoint to joystick
+  turnSP = wa2;
+  //actual angle is where encoder is pointing
+  ActAngle = CheckWrap(m_flEncoder.GetPosition()-constants::kFrontLeftOffset);  //cancoder position accumulates on every turn - does not automatically wrap
+  //get the effective angle - direction motor is moving
+  turnPV = GetEffectiveAngle(ActAngle,flFlip);
+  //if desired setpoint change is greater than our setting - flip direction of drive
+  if (fabs(turnSP - turnPV) > constants::kSwerveAngleBreak)
+  {
+    flFlip *= -1.0;
+    turnPV = GetEffectiveAngle(ActAngle,flFlip);
+  }
+  //calculate PID base on effective angle and setpoint
+  turnOUT = std::clamp(m_TurnPID.Calculate(turnPV,turnSP),-1.0,1.0); 
+  m_flTurn.Set(ControlMode::PercentOutput,turnOUT);
+  m_flDrive.Set(ControlMode::PercentOutput,ws2 *= flFlip);
+
+  //Rear Left
+  //set setpoint to joystick
+  turnSP = wa3;
+  //actual angle is where encoder is pointing
+  ActAngle = CheckWrap(m_rlEncoder.GetPosition()-constants::kRearLeftOffset);  //cancoder position accumulates on every turn - does not automatically wrap
+  //get the effective angle - direction motor is moving
+  turnPV = GetEffectiveAngle(ActAngle,rlFlip);
+  //if desired setpoint change is greater than our setting - flip direction of drive
+  if (fabs(turnSP - turnPV) > constants::kSwerveAngleBreak)
+  {
+    rlFlip *= -1.0;
+    turnPV = GetEffectiveAngle(ActAngle,rlFlip);
+  }
+  //calculate PID base on effective angle and setpoint
+  turnOUT = std::clamp(m_TurnPID.Calculate(turnPV,turnSP),-1.0,1.0); 
+  m_rlTurn.Set(ControlMode::PercentOutput,turnOUT);
+  m_rlDrive.Set(ControlMode::PercentOutput,ws3 *= rlFlip);
+
+  //Rear Right
+  //set setpoint to joystick
+  turnSP = wa4;
+  //actual angle is where encoder is pointing
+  ActAngle = CheckWrap(m_rrEncoder.GetPosition()-constants::kRearRightOffset);  //cancoder position accumulates on every turn - does not automatically wrap
+  //get the effective angle - direction motor is moving
+  turnPV = GetEffectiveAngle(ActAngle,rrFlip);
+  //if desired setpoint change is greater than our setting - flip direction of drive
+  if (fabs(turnSP - turnPV) > constants::kSwerveAngleBreak)
+  {
+    rrFlip *= -1.0;
+    turnPV = GetEffectiveAngle(ActAngle,rrFlip);
+  }
+  //calculate PID based on effective angle and setpoint
+  turnOUT = std::clamp(m_TurnPID.Calculate(turnPV,turnSP),-1.0,1.0); 
+  m_rrTurn.Set(ControlMode::PercentOutput,turnOUT);
+  m_rrDrive.Set(ControlMode::PercentOutput,ws4 *= rrFlip);
+}
+
+/*void Robot::DriveSwerve(double FWD, double STR, double RCW)
 {
   
   L = constants::kWheelbase; //wheelbase (from center of front wheel to center of back wheel)
@@ -94,15 +211,6 @@ void Robot::DriveSwerve(double FWD, double STR, double RCW)
   m_frTurn.Set(ControlMode::PercentOutput,turnOUT);
   m_frDrive.Set(ControlMode::PercentOutput,ws1 *= frFlip);
 
-  /*static int counter2 = 0;
-  counter2++;
-  if(counter2 >= 13) //250 msecs
-  {
-      counter2 = 0;
-      ntBOSS->PutNumber("FR_SP", m_TurnPID.GetSetpoint());
-      ntBOSS->PutNumber("FR_ERR", m_TurnPID.GetPositionError());
-  }*/
-
   //Front Left
   turnPV = CheckWrap(m_flEncoder.GetPosition()-constants::kFrontLeftOffset);  //cancoder position accumulates on every turn - does not automatically wrap
   turnSP = wa2;
@@ -110,7 +218,7 @@ void Robot::DriveSwerve(double FWD, double STR, double RCW)
   if(constants::kSwerveOptimizeAngles)
   {
     if(flFlip < 0) (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
-    if (fabs(turnSP + lastFL_SP) > constants::kSwerveAngleBreak) 
+    if (fabs(turnSP - lastFL_SP) > constants::kSwerveAngleBreak) 
     {
       flFlip *= -1.0;
       (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
@@ -128,7 +236,7 @@ void Robot::DriveSwerve(double FWD, double STR, double RCW)
   if(constants::kSwerveOptimizeAngles)
   {
     if(rlFlip < 0) (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
-    if (fabs(turnSP + lastRL_SP) > constants::kSwerveAngleBreak) 
+    if (fabs(turnSP - lastRL_SP) > constants::kSwerveAngleBreak) 
     {
       rlFlip *= -1.0;
       (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
@@ -146,7 +254,7 @@ void Robot::DriveSwerve(double FWD, double STR, double RCW)
   if(constants::kSwerveOptimizeAngles)
   {
     if(rrFlip < 0) (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
-    if (fabs(turnSP + lastRR_SP) > constants::kSwerveAngleBreak) 
+    if (fabs(turnSP - lastRR_SP) > constants::kSwerveAngleBreak) 
     {
       rrFlip *= -1.0;
       (turnSP<=0.0)?turnSP+=180.0:turnSP-=180.0;
@@ -156,7 +264,7 @@ void Robot::DriveSwerve(double FWD, double STR, double RCW)
   turnOUT = std::clamp(m_TurnPID.Calculate(turnPV,turnSP),-1.0,1.0); 
   m_rrTurn.Set(ControlMode::PercentOutput,turnOUT);
   m_rrDrive.Set(ControlMode::PercentOutput,ws4 *= rrFlip);
-}
+}*/
 
 void Robot::ConfigMotors()
 {
@@ -336,4 +444,36 @@ void Robot::ConfigMotors()
   m_rrTurn.ConfigStatorCurrentLimit(turnStatorSCLC);//CURRENT_LIMITING
   m_rrTurn.SetStatusFramePeriod(StatusFrameEnhanced::Status_2_Feedback0, 255, 10);
   m_rrTurn.SetStatusFramePeriod(StatusFrameEnhanced::Status_1_General, 255, 10);
+
+  m_winch1.ConfigFactoryDefault(kTimeoutMs);
+  m_winch1.ConfigSelectedFeedbackSensor(FeedbackDevice::QuadEncoder, 0,kTimeoutMs);
+  m_winch1.SetNeutralMode(NeutralMode::Brake);
+  m_winch1.SetSensorPhase(false);
+  m_winch1.SetInverted(false);
+  m_winch1.SetSafetyEnabled(false);
+  m_winch1.ConfigPeakCurrentLimit(constants::kPeakCurrentLimit, kTimeoutMs);
+  m_winch1.ConfigPeakCurrentDuration(constants::kPeakCurrentDuration, kTimeoutMs);
+  m_winch1.ConfigContinuousCurrentLimit(constants::kContinuousCurrentLimit, kTimeoutMs);
+  m_winch1.EnableCurrentLimit(true);
+  m_winch1.SetStatusFramePeriod(StatusFrameEnhanced::Status_13_Base_PIDF0, 10, 10);
+  m_winch1.SetStatusFramePeriod(StatusFrameEnhanced::Status_10_MotionMagic, 10, 10);
+  m_winch1.ConfigNominalOutputForward(0, kTimeoutMs);
+  m_winch1.ConfigNominalOutputReverse(0, kTimeoutMs);
+  m_winch1.ConfigPeakOutputForward(1, kTimeoutMs);
+  m_winch1.ConfigPeakOutputReverse(-1, kTimeoutMs);
+  m_winch1.Config_kF(0, constants::kWinch_F, kTimeoutMs);
+  m_winch1.Config_kP(0, constants::kWinch_P, kTimeoutMs);
+  m_winch1.Config_kI(0, constants::kWinch_I, kTimeoutMs);
+  m_winch1.Config_kD(0, constants::kWinch_D, kTimeoutMs);
+  m_winch1.Config_IntegralZone(0, 400, kTimeoutMs);
+  m_winch1.ConfigAllowableClosedloopError(0,constants::kWinch_AllowableError,kTimeoutMs); 
+  m_winch1.ConfigMotionCruiseVelocity(constants::kWinch_MotionCruiseVelocity, kTimeoutMs);
+  m_winch1.ConfigMotionAcceleration(constants::kWinch_MotionAcceleration, kTimeoutMs);
+  m_winch1.ConfigMotionSCurveStrength(constants::kWinch_MotionSCurveStrength, kTimeoutMs);
+  m_winch1.ConfigVoltageCompSaturation(constants::kVoltageCompSaturation);
+  m_winch1.EnableVoltageCompensation(true);
+  m_winch1.ConfigForwardSoftLimitThreshold(constants::kWinch_ExtendLimit);
+  m_winch1.ConfigReverseSoftLimitThreshold(constants::kWinch_RetractLimit);
+  m_winch1.ConfigForwardSoftLimitEnable(true);
+  m_winch1.ConfigReverseSoftLimitEnable(true);
 }

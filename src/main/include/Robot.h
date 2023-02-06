@@ -12,6 +12,7 @@
 #include "AHRS.h"
 #include <frc/controller/PIDController.h>
 #include <frc/filter/SlewRateLimiter.h>
+#include <frc/Servo.h>
 
 class Robot : public frc::TimedRobot {
  public:
@@ -33,7 +34,7 @@ class Robot : public frc::TimedRobot {
 
   double GetHeading();
   double CheckWrap(double pos);
-  void UpdateSwerveSP();
+  double GetEffectiveAngle(double actAngle,double flip);
   void DriveSwerve(double FWD, double STR, double RCW);
   void ConfigMotors();
   void Self_Level();
@@ -69,7 +70,11 @@ class Robot : public frc::TimedRobot {
     WPI_TalonFX m_rrTurn{constants::kRearRightTurn_ID};
     WPI_TalonFX m_rrDrive{constants::kRearRightDrive_ID};
     WPI_CANCoder m_rrEncoder{constants::kRearRightEncoder_ID};
-         
+
+    WPI_TalonSRX m_winch1{constants::kWinch1_ID};
+
+    frc::Servo ArmBrake{0};         
+
     //SWERVE
     
     double lastFR_SP = 0.0;

@@ -37,6 +37,8 @@ namespace constants
   constexpr int kRearRightDrive_ID = 20;
   constexpr int kRearRightEncoder_ID = 7;
 
+  constexpr int kWinch1_ID = 26;
+
   constexpr double kEncoderCountsPerDegree = 4096.0 / 360.0;
 
   //read these from cancoder absolute position when cancoder is configured to -180 to 180 range
@@ -81,7 +83,24 @@ namespace constants
   constexpr double kDriveStatorPeakCurrentDuration = 15; //msecs
   constexpr double kDriveVoltageCompSaturation = 12.0;
   
+  constexpr double kWinch_F = 0.9;     //FeedForward
+  constexpr double kWinch_P = 2.3;     //Proportional Gain
+  constexpr double kWinch_I = 0.005;   //Integral Gain
+  constexpr double kWinch_D = 0.0;     //Derivative Gain 
+  constexpr double kWinch_MotionCruiseVelocity = 60000;
+  constexpr double kWinch_MotionAcceleration = 120000;
+  constexpr double kWinch_MotionSCurveStrength = 5;
+  constexpr double kWinch_ExtendLimit = 34500; //max possible move in any mode
+  constexpr double kWinch_ExtendCounts = 31150;//extended target in manual mode
+  constexpr double kWinch_RetractCounts = 10;  //retracted target in manual mode
+  constexpr double kWinch_RetractLimit = 0;    //min possible move in any mode
+  constexpr double kWinch_AllowableError = 20;
 
+  constexpr double kContinuousCurrentLimit = 15.0;
+  constexpr double kSupplyCurrentLimit = 20.0;
+  constexpr double kPeakCurrentLimit = 20.0;
+  constexpr double kPeakCurrentDuration = 25; //msecs
+  constexpr double kVoltageCompSaturation = 12.0;
   
   //auto profile - drive wheel position - convert Feet to position units (encoder count)
   constexpr double kDriveCPR = 2048;
