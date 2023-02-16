@@ -4,10 +4,15 @@ void Robot::RobotInit()
 {
   ntBOSS = nt::NetworkTableInstance::GetDefault().GetTable("dashBOSS");
   ConfigMotors();
+<<<<<<< HEAD
   frTurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
   flTurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
   rlTurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
   rrTurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
+=======
+  ArmBrake.SetBounds(2.0, 1.8, 1.5, 1.2, 1.0); 
+  m_TurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
+>>>>>>> 782c8896b3e564d9978b473e074ff2a6a50699ba
   try
   {
     ahrs = new AHRS(frc::SPI::Port::kMXP);
@@ -76,6 +81,7 @@ void Robot::RobotPeriodic()
   if(counter3 >= 50) //1 secs
   {
     counter3=0;
+<<<<<<< HEAD
     ntBOSS->PutNumber("FR_DIR",frSwerve.turnPV);
     ntBOSS->PutNumber("FR_DIST", frSwerve.driveOUT);
     ntBOSS->PutNumber("FL_DIR",flSwerve.turnPV);
@@ -84,6 +90,17 @@ void Robot::RobotPeriodic()
     ntBOSS->PutNumber("RL_DIST", rlSwerve.driveOUT);
     ntBOSS->PutNumber("RR_DIR",rrSwerve.turnPV);
     ntBOSS->PutNumber("RR_DIST", rrSwerve.driveOUT);
+=======
+    ntBOSS->PutNumber("FR_POS",CheckWrap(m_frEncoder.GetPosition()-constants::kFrontRightOffset));
+    ntBOSS->PutNumber("FR_DIST", m_frDrive.GetSelectedSensorPosition() * constants::kDriveUnitsToFeet);
+    ntBOSS->PutNumber("FL_POS",CheckWrap(m_flEncoder.GetPosition()-constants::kFrontLeftOffset));
+    ntBOSS->PutNumber("FL_DIST", m_flDrive.GetSelectedSensorPosition() * constants::kDriveUnitsToFeet);
+    ntBOSS->PutNumber("RL_POS",CheckWrap(m_rlEncoder.GetPosition()-constants::kRearLeftOffset));
+    ntBOSS->PutNumber("RL_DIST", m_rlDrive.GetSelectedSensorPosition() * constants::kDriveUnitsToFeet);
+    ntBOSS->PutNumber("RR_POS",CheckWrap(m_rrEncoder.GetPosition()-constants::kRearRightOffset));
+    ntBOSS->PutNumber("RR_DIST", m_rrDrive.GetSelectedSensorPosition() * constants::kDriveUnitsToFeet);
+    ntBOSS->PutNumber("Winch",m_winch1.GetSelectedSensorPosition());
+>>>>>>> 782c8896b3e564d9978b473e074ff2a6a50699ba
     ntBOSS->PutNumber("joy_FORWARD", forward);
     ntBOSS->PutNumber("joy_STRAFE", strafe);
     ntBOSS->PutNumber("joy_ROTATE", rotate);
@@ -150,7 +167,24 @@ void Robot::TestInit()
 }
 
 void Robot::TestPeriodic() 
+<<<<<<< HEAD
 {}
+=======
+{
+  //Self_Level();
+  
+  /*To drive fully out, the position is set to 1.0 (2" stroke) 
+  To drive half way, the position is set to 0.5 
+  To drive fully in, the position is set to 0.0
+  ArmBrake.SetBounds(2.0, 1.8, 1.5, 1.2, 1.0); */
+  static bool BrakeOn;
+  if(m_driveController.GetRawButtonPressed(1)) BrakeOn = !BrakeOn;
+  if(BrakeOn) ArmBrake.SetPosition(0.0);  //retracted in
+  if(!BrakeOn) ArmBrake.SetPosition(1.0); //extended out
+
+
+}
+>>>>>>> 782c8896b3e564d9978b473e074ff2a6a50699ba
 
 double Robot::GetHeading()
 {
