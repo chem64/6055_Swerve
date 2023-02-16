@@ -1,17 +1,18 @@
 #pragma once
 
+
 #include <frc/TimedRobot.h>
 #include <frc/XboxController.h>
 #include <frc/Joystick.h>
 #include <ctre/Phoenix.h>
+#include "frc/DriverStation.h"
 #include "networktables/NetworkTable.h"
 #include "networktables/NetworkTableInstance.h"
 #include "Constants.h"
-#include "Auto_2.h"
-#include "Auto_16.h"
 #include "AHRS.h"
 #include <frc/controller/PIDController.h>
 #include <frc/filter/SlewRateLimiter.h>
+#include <frc/Servo.h>
 
 class Robot : public frc::TimedRobot {
  public:
@@ -33,14 +34,9 @@ class Robot : public frc::TimedRobot {
 
   double GetHeading();
   double CheckWrap(double pos);
-  void UpdateSwerveSP();
+  double GetEffectiveAngle(double actAngle,double flip);
   void DriveSwerve(double FWD, double STR, double RCW);
   void ConfigMotors();
-  void Self_Level();
-  void RunAuto_1();
-  bool AutoIsRunning();
-  void AutoReset();
-  void InitBuffer(BufferedTrajectoryPointStream *bufstrm, const double profile[][2], int totalCnt, bool reverse);
   void ZeroDistance();
   void StopAllDrives();
 
@@ -54,59 +50,49 @@ class Robot : public frc::TimedRobot {
     bool SwerveOrientationToField = false;
     
     //CAN Devices
-    WPI_TalonFX m_frTurn{constants::kFrontRightTurn_ID};
-    WPI_TalonFX m_frDrive{constants::kFrontRightDrive_ID};
-    WPI_CANCoder m_frEncoder{constants::kFrontRightEncoder_ID};
+    WPI_TalonFX can_frTurn{constants::kFrontRightTurn_ID};
+    WPI_TalonFX can_frDrive{constants::kFrontRightDrive_ID};
+    WPI_CANCoder can_frEncoder{constants::kFrontRightEncoder_ID};
 
-    WPI_TalonFX m_flTurn{constants::kFrontLeftTurn_ID};
-    WPI_TalonFX m_flDrive{constants::kFrontLeftDrive_ID};
-    WPI_CANCoder m_flEncoder{constants::kFrontLeftEncoder_ID};
+    WPI_TalonFX can_flTurn{constants::kFrontLeftTurn_ID};
+    WPI_TalonFX can_flDrive{constants::kFrontLeftDrive_ID};
+    WPI_CANCoder can_flEncoder{constants::kFrontLeftEncoder_ID};
     
-    WPI_TalonFX m_rlTurn{constants::kRearLeftTurn_ID};
-    WPI_TalonFX m_rlDrive{constants::kRearLeftDrive_ID};
-    WPI_CANCoder m_rlEncoder{constants::kRearLeftEncoder_ID};
+    WPI_TalonFX can_rlTurn{constants::kRearLeftTurn_ID};
+    WPI_TalonFX can_rlDrive{constants::kRearLeftDrive_ID};
+    WPI_CANCoder can_rlEncoder{constants::kRearLeftEncoder_ID};
     
-    WPI_TalonFX m_rrTurn{constants::kRearRightTurn_ID};
-    WPI_TalonFX m_rrDrive{constants::kRearRightDrive_ID};
-    WPI_CANCoder m_rrEncoder{constants::kRearRightEncoder_ID};
+    WPI_TalonFX can_rrTurn{constants::kRearRightTurn_ID};
+    WPI_TalonFX can_rrDrive{constants::kRearRightDrive_ID};
+    WPI_CANCoder can_rrEncoder{constants::kRearRightEncoder_ID};
+
          
     //SWERVE
-    
-    double lastFR_SP = 0.0;
-    double lastFL_SP = 0.0;
-    double lastRL_SP = 0.0;
-    double lastRR_SP = 0.0;
-    double driveOut = 0.0;
-    double rollDeg = 0.0;
-    frc2::PIDController m_TurnPID{constants::kTurn_KP, constants::kTurn_KI, constants::kTurn_KD};
-    frc::SlewRateLimiter<units::scalar> spdFilter{2/1_s};
-    
-    double frFlip = 1.0;
-    double flFlip = 1.0;
-    double rlFlip = 1.0;
-    double rrFlip = 1.0;
 
+    struct SwerveType
+    {
+      double actAngle = 0.0;  //current encoder position - encoder offset
+      double turnSP = 0.0;    //desired direction from joystick
+      double turnPV = 0.0;    //effective angle - direction wheel is moving
+      double flip = 1.0;      //-1 if drive is reversed, 1 if drive is not reversed
+      double turnOUT = 0.0;   //output to turn motor
+      double driveOUT = 0.0;  //output to drive motor
+    };
+
+    SwerveType frSwerve;
+    SwerveType flSwerve;
+    SwerveType rlSwerve;
+    SwerveType rrSwerve;
+    
+    frc2::PIDController frTurnPID{constants::kTurn_KP, constants::kTurn_KI, constants::kTurn_KD};
+    frc2::PIDController flTurnPID{constants::kTurn_KP, constants::kTurn_KI, constants::kTurn_KD};
+    frc2::PIDController rlTurnPID{constants::kTurn_KP, constants::kTurn_KI, constants::kTurn_KD};
+    frc2::PIDController rrTurnPID{constants::kTurn_KP, constants::kTurn_KI, constants::kTurn_KD};
+    frc::SlewRateLimiter<units::scalar> spdFilter{2/1_s};
+       
     double forward;
     double strafe;
     double rotate;
-
-    double L;
-    double W;
-    double R;
-
-	  double A;
-    double B;
-    double C;
-    double D;
-
-    double ws1;
-    double wa1;
-    double ws2;
-    double wa2;
-    double ws3;
-    double wa3;
-    double ws4;
-    double wa4;
 
   SupplyCurrentLimitConfiguration driveSCLC;
   StatorCurrentLimitConfiguration driveStatorSCLC;

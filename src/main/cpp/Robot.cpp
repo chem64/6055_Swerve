@@ -4,7 +4,10 @@ void Robot::RobotInit()
 {
   ntBOSS = nt::NetworkTableInstance::GetDefault().GetTable("dashBOSS");
   ConfigMotors();
-  m_TurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
+  frTurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
+  flTurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
+  rlTurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
+  rrTurnPID.EnableContinuousInput(-180.0,180.0); //required for swerve
   try
   {
     ahrs = new AHRS(frc::SPI::Port::kMXP);
@@ -16,15 +19,7 @@ void Robot::RobotInit()
     printf("!!! NAVX ERROR !!!");
     HeadingOffset = 0;
   }
-  AutoRev16_LeftBufStrm = new BufferedTrajectoryPointStream();
-  AutoRev16_RightBufStrm = new BufferedTrajectoryPointStream();
-  InitBuffer(AutoRev16_LeftBufStrm,auto16_L,auto16_size,true);
-  InitBuffer(AutoRev16_RightBufStrm,auto16_R,auto16_size,true);
-  AutoFwd2_LeftBufStrm = new BufferedTrajectoryPointStream();
-  AutoFwd2_RightBufStrm = new BufferedTrajectoryPointStream();
-  InitBuffer(AutoFwd2_LeftBufStrm,auto2_L,auto2_size,true);
-  InitBuffer(AutoFwd2_RightBufStrm,auto2_R,auto2_size,true);
-
+  
   //FMSMatch = frc::DriverStation::IsFMSAttached(); //is this a real match with FMS
   AutoTimer = new frc::Timer();
   AutoTimer->Start();
@@ -33,7 +28,6 @@ void Robot::RobotInit()
 
   ClockStart = frc::Timer::GetFPGATimestamp();
 
-  UpdateSwerveSP();
 }
 
 void Robot::RobotPeriodic() 
@@ -82,14 +76,14 @@ void Robot::RobotPeriodic()
   if(counter3 >= 50) //1 secs
   {
     counter3=0;
-    ntBOSS->PutNumber("FR_POS",CheckWrap(m_frEncoder.GetPosition()-constants::kFrontRightOffset));
-    ntBOSS->PutNumber("FR_DIST", m_frDrive.GetSelectedSensorPosition() * constants::kDriveUnitsToFeet);
-    ntBOSS->PutNumber("FL_POS",CheckWrap(m_flEncoder.GetPosition()-constants::kFrontLeftOffset));
-    ntBOSS->PutNumber("FL_DIST", m_flDrive.GetSelectedSensorPosition() * constants::kDriveUnitsToFeet);
-    ntBOSS->PutNumber("RL_POS",CheckWrap(m_rlEncoder.GetPosition()-constants::kRearLeftOffset));
-    ntBOSS->PutNumber("RL_DIST", m_rlDrive.GetSelectedSensorPosition() * constants::kDriveUnitsToFeet);
-    ntBOSS->PutNumber("RR_POS",CheckWrap(m_rrEncoder.GetPosition()-constants::kRearRightOffset));
-    ntBOSS->PutNumber("RR_DIST", m_rrDrive.GetSelectedSensorPosition() * constants::kDriveUnitsToFeet);
+    ntBOSS->PutNumber("FR_DIR",frSwerve.turnPV);
+    ntBOSS->PutNumber("FR_DIST", frSwerve.driveOUT);
+    ntBOSS->PutNumber("FL_DIR",flSwerve.turnPV);
+    ntBOSS->PutNumber("FL_DIST", flSwerve.driveOUT);
+    ntBOSS->PutNumber("RL_DIR",rlSwerve.turnPV);
+    ntBOSS->PutNumber("RL_DIST", rlSwerve.driveOUT);
+    ntBOSS->PutNumber("RR_DIR",rrSwerve.turnPV);
+    ntBOSS->PutNumber("RR_DIST", rrSwerve.driveOUT);
     ntBOSS->PutNumber("joy_FORWARD", forward);
     ntBOSS->PutNumber("joy_STRAFE", strafe);
     ntBOSS->PutNumber("joy_ROTATE", rotate);
@@ -112,18 +106,11 @@ void Robot::RobotPeriodic()
 
 void Robot::AutonomousInit() 
 {
-  //last chance check for auto selection
-  dAutoSelect = (int) ntBOSS->GetNumber("AutoSelect", dAutoSelect);
-  AutoState = 0;
   CurMode = 1;
 }
 
 void Robot::AutonomousPeriodic() 
-{
-  //execute the selected auto routine
-  if(dAutoSelect == 1)  RunAuto_1();
-  //if(dAutoSelect == 2)  RunAuto_2();
-}
+{}
 
 void Robot::TeleopInit() 
 {
@@ -152,7 +139,6 @@ void Robot::TeleopPeriodic()
 void Robot::DisabledInit() 
 {
   StopAllDrives();
-  UpdateSwerveSP();
   CurMode = 0;
 }
 
@@ -164,9 +150,7 @@ void Robot::TestInit()
 }
 
 void Robot::TestPeriodic() 
-{
-  Self_Level();  
-}
+{}
 
 double Robot::GetHeading()
 {
