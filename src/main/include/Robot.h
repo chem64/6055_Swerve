@@ -62,22 +62,11 @@ class Robot : public frc::TimedRobot {
     WPI_TalonFX can_rlDrive{constants::kRearLeftDrive_ID};
     WPI_CANCoder can_rlEncoder{constants::kRearLeftEncoder_ID};
     
-<<<<<<< HEAD
     WPI_TalonFX can_rrTurn{constants::kRearRightTurn_ID};
     WPI_TalonFX can_rrDrive{constants::kRearRightDrive_ID};
     WPI_CANCoder can_rrEncoder{constants::kRearRightEncoder_ID};
 
          
-=======
-    WPI_TalonFX m_rrTurn{constants::kRearRightTurn_ID};
-    WPI_TalonFX m_rrDrive{constants::kRearRightDrive_ID};
-    WPI_CANCoder m_rrEncoder{constants::kRearRightEncoder_ID};
-
-    WPI_TalonSRX m_winch1{constants::kWinch1_ID};
-
-    frc::Servo ArmBrake{0};         
-
->>>>>>> 782c8896b3e564d9978b473e074ff2a6a50699ba
     //SWERVE
 
     struct SwerveType
